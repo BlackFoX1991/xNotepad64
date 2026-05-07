@@ -1,21 +1,15 @@
 # xNotepad64
 
-xNotepad64 ist ein Texteditor zur Bearbeitung extrem großer Text-Dokumente die weitaus größer sind als 4 Gigabyte. Er beherrscht die nötigsten Basics wie Kopieren, Einfügen, Alles markieren, Schriftart-Einstellungen sowie Rückgängig machen als auch Wiederholen von Aktionen. Zudem besitzt er eine gut aufgestellte Such-Funktion.
+xNotepad64 is a text editor designed for working with extremely large text documents, including files far bigger than 4 GB. It supports the essential basics such as copy, paste, select all, font settings, undo, and redo. It also includes a well-equipped search feature.
 
 
 
-## Funktionsweise
+## How it works
 
-Der Editor lädt die Datei nicht komplett sondern schneidet sich einzelne Positionsblöcke zusammen und liest Sie beim abrufen aus. Man kann zudem ein Limit festlegen wie groß jeder Block sein darf. Beim übernehmen von Einstellungen wird die Block-Liste dann neu berechnet und geöffnet.
-
-
-
-## Weitere Infos
-
-Das Programm wurde grundsätzlich für meine eigenen Bedürfnisse entwickelt, es wurde etwas benötigt das große Dateien für die Bearbeitung öffnet ohne den Arbeitsspeicher extrem auszulasten. Ich würde sagen das Programm erfüllt seinen Zweck ganz gut.
+The editor does not load the entire file at once. Instead, it breaks the file into individual position-based blocks and reads them as needed. You can also set a limit for how large each block is allowed to be. When the settings are applied, the block list is recalculated and reopened.
 
 
 
-## Entwicklung
+## Additional information
 
-Aktuell ist noch eine ersetzen Funktion und die Möglichkeit mehrere Sprachen anzubieten geplant. Weiteres kommt wenns mir spontan einfällt.
+The program was originally developed for my own needs. I needed something that could open and edit large files without putting extreme pressure on memory usage. I would say the program serves its purpose quite well.
