@@ -25,15 +25,18 @@ namespace xNotepad64
         private bool _currentChunkDirty;
         private bool _isBusy;
         private bool _closeApproved;
+        private readonly string? _startupFilePath;
         private string _loadedChunkCommittedText = string.Empty;
         private string _loadedChunkBaselineText = string.Empty;
 
         private string Program_Version => typeof(xMain).Assembly.GetName().Version?.ToString() ?? "n/a";
 
-        public xMain()
+        public xMain(string? startupFilePath = null)
         {
+            _startupFilePath = startupFilePath;
             InitializeComponent();
             InitializeEditorShell();
+            Shown += xMain_Shown;
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -77,6 +80,18 @@ namespace xNotepad64
             ApplyLocalization();
             LoadEditorText(string.Empty, string.Empty);
             UpdateWindowState();
+        }
+
+        private async void xMain_Shown(object? sender, EventArgs e)
+        {
+            Shown -= xMain_Shown;
+
+            if (string.IsNullOrWhiteSpace(_startupFilePath))
+            {
+                return;
+            }
+
+            await OpenDocumentAsync(_startupFilePath);
         }
 
         private void WireDocumentCommands()
