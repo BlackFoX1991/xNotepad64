@@ -371,7 +371,7 @@
             // 
             // SizeCol
             // 
-            SizeCol.Text = "Groesse ( MiB )";
+            SizeCol.Text = "Groesse";
             SizeCol.Width = 120;
             // 
             // xMain

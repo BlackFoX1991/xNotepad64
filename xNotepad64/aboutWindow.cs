@@ -25,7 +25,7 @@ namespace xNotepad64
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://github.com/BlackFoX1991",
+                FileName = "https://github.com/BlackFoX1991/xNotepad64",
                 UseShellExecute = true
             });
         }
