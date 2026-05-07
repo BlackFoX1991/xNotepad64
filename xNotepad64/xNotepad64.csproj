@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <Content Include="xNotepad64_multisize.ico" />
+    <Content Include="Localization\*.local">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

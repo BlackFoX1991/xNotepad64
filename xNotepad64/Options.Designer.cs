@@ -1,4 +1,4 @@
-namespace xNotepad64
+﻿namespace xNotepad64
 {
     partial class Options
     {
@@ -41,6 +41,17 @@ namespace xNotepad64
             fontSizeCaptionLabel = new Label();
             fontNameCaptionLabel = new Label();
             chooseFontButton = new Button();
+            languageGroupBox = new GroupBox();
+            languageDescriptionValueLabel = new Label();
+            languageDescriptionCaptionLabel = new Label();
+            languageAuthorValueLabel = new Label();
+            languageAuthorCaptionLabel = new Label();
+            languageVersionValueLabel = new Label();
+            languageVersionCaptionLabel = new Label();
+            languageCultureValueLabel = new Label();
+            languageCultureCaptionLabel = new Label();
+            languageComboBox = new ComboBox();
+            languageLabel = new Label();
             infoGroupBox = new GroupBox();
             gibValueLabel = new Label();
             mibValueLabel = new Label();
@@ -75,12 +86,13 @@ namespace xNotepad64
             mainLayoutPanel.RowCount = 2;
             mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 68F));
-            mainLayoutPanel.Size = new Size(620, 493);
+            mainLayoutPanel.Size = new Size(620, 620);
             mainLayoutPanel.TabIndex = 0;
             // 
             // contentPanel
             // 
             contentPanel.Controls.Add(fontGroupBox);
+            contentPanel.Controls.Add(languageGroupBox);
             contentPanel.Controls.Add(infoGroupBox);
             contentPanel.Controls.Add(allowAbruptChunkCutoffCheckBox);
             contentPanel.Controls.Add(hintLabel);
@@ -90,7 +102,7 @@ namespace xNotepad64
             contentPanel.Location = new Point(3, 3);
             contentPanel.Name = "contentPanel";
             contentPanel.Padding = new Padding(18);
-            contentPanel.Size = new Size(614, 419);
+            contentPanel.Size = new Size(614, 546);
             contentPanel.TabIndex = 0;
             // 
             // fontGroupBox
@@ -104,7 +116,7 @@ namespace xNotepad64
             fontGroupBox.Controls.Add(fontSizeCaptionLabel);
             fontGroupBox.Controls.Add(fontNameCaptionLabel);
             fontGroupBox.Controls.Add(chooseFontButton);
-            fontGroupBox.Location = new Point(22, 229);
+            fontGroupBox.Location = new Point(22, 367);
             fontGroupBox.Name = "fontGroupBox";
             fontGroupBox.Size = new Size(570, 165);
             fontGroupBox.TabIndex = 4;
@@ -193,6 +205,114 @@ namespace xNotepad64
             chooseFontButton.Text = "Schrift waehlen";
             chooseFontButton.UseVisualStyleBackColor = true;
             // 
+            // languageGroupBox
+            // 
+            languageGroupBox.Controls.Add(languageDescriptionValueLabel);
+            languageGroupBox.Controls.Add(languageDescriptionCaptionLabel);
+            languageGroupBox.Controls.Add(languageAuthorValueLabel);
+            languageGroupBox.Controls.Add(languageAuthorCaptionLabel);
+            languageGroupBox.Controls.Add(languageVersionValueLabel);
+            languageGroupBox.Controls.Add(languageVersionCaptionLabel);
+            languageGroupBox.Controls.Add(languageCultureValueLabel);
+            languageGroupBox.Controls.Add(languageCultureCaptionLabel);
+            languageGroupBox.Controls.Add(languageComboBox);
+            languageGroupBox.Controls.Add(languageLabel);
+            languageGroupBox.Location = new Point(22, 228);
+            languageGroupBox.Name = "languageGroupBox";
+            languageGroupBox.Size = new Size(570, 133);
+            languageGroupBox.TabIndex = 6;
+            languageGroupBox.TabStop = false;
+            languageGroupBox.Text = "Sprache";
+            // 
+            // languageDescriptionValueLabel
+            // 
+            languageDescriptionValueLabel.Location = new Point(114, 90);
+            languageDescriptionValueLabel.Name = "languageDescriptionValueLabel";
+            languageDescriptionValueLabel.Size = new Size(435, 34);
+            languageDescriptionValueLabel.TabIndex = 9;
+            languageDescriptionValueLabel.Text = "-";
+            // 
+            // languageDescriptionCaptionLabel
+            // 
+            languageDescriptionCaptionLabel.AutoSize = true;
+            languageDescriptionCaptionLabel.Location = new Point(17, 90);
+            languageDescriptionCaptionLabel.Name = "languageDescriptionCaptionLabel";
+            languageDescriptionCaptionLabel.Size = new Size(93, 20);
+            languageDescriptionCaptionLabel.TabIndex = 8;
+            languageDescriptionCaptionLabel.Text = "Beschreibung:";
+            // 
+            // languageAuthorValueLabel
+            // 
+            languageAuthorValueLabel.AutoSize = true;
+            languageAuthorValueLabel.Location = new Point(388, 60);
+            languageAuthorValueLabel.Name = "languageAuthorValueLabel";
+            languageAuthorValueLabel.Size = new Size(12, 20);
+            languageAuthorValueLabel.TabIndex = 7;
+            languageAuthorValueLabel.Text = "-";
+            // 
+            // languageAuthorCaptionLabel
+            // 
+            languageAuthorCaptionLabel.AutoSize = true;
+            languageAuthorCaptionLabel.Location = new Point(304, 60);
+            languageAuthorCaptionLabel.Name = "languageAuthorCaptionLabel";
+            languageAuthorCaptionLabel.Size = new Size(49, 20);
+            languageAuthorCaptionLabel.TabIndex = 6;
+            languageAuthorCaptionLabel.Text = "Autor:";
+            // 
+            // languageVersionValueLabel
+            // 
+            languageVersionValueLabel.AutoSize = true;
+            languageVersionValueLabel.Location = new Point(114, 60);
+            languageVersionValueLabel.Name = "languageVersionValueLabel";
+            languageVersionValueLabel.Size = new Size(12, 20);
+            languageVersionValueLabel.TabIndex = 5;
+            languageVersionValueLabel.Text = "-";
+            // 
+            // languageVersionCaptionLabel
+            // 
+            languageVersionCaptionLabel.AutoSize = true;
+            languageVersionCaptionLabel.Location = new Point(17, 60);
+            languageVersionCaptionLabel.Name = "languageVersionCaptionLabel";
+            languageVersionCaptionLabel.Size = new Size(60, 20);
+            languageVersionCaptionLabel.TabIndex = 4;
+            languageVersionCaptionLabel.Text = "Version:";
+            // 
+            // languageCultureValueLabel
+            // 
+            languageCultureValueLabel.AutoSize = true;
+            languageCultureValueLabel.Location = new Point(388, 30);
+            languageCultureValueLabel.Name = "languageCultureValueLabel";
+            languageCultureValueLabel.Size = new Size(12, 20);
+            languageCultureValueLabel.TabIndex = 3;
+            languageCultureValueLabel.Text = "-";
+            // 
+            // languageCultureCaptionLabel
+            // 
+            languageCultureCaptionLabel.AutoSize = true;
+            languageCultureCaptionLabel.Location = new Point(304, 30);
+            languageCultureCaptionLabel.Name = "languageCultureCaptionLabel";
+            languageCultureCaptionLabel.Size = new Size(49, 20);
+            languageCultureCaptionLabel.TabIndex = 2;
+            languageCultureCaptionLabel.Text = "Kultur:";
+            // 
+            // languageComboBox
+            // 
+            languageComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            languageComboBox.FormattingEnabled = true;
+            languageComboBox.Location = new Point(114, 27);
+            languageComboBox.Name = "languageComboBox";
+            languageComboBox.Size = new Size(170, 28);
+            languageComboBox.TabIndex = 1;
+            // 
+            // languageLabel
+            // 
+            languageLabel.AutoSize = true;
+            languageLabel.Location = new Point(17, 30);
+            languageLabel.Name = "languageLabel";
+            languageLabel.Size = new Size(76, 20);
+            languageLabel.TabIndex = 0;
+            languageLabel.Text = "UI-Sprache:";
+            // 
             // infoGroupBox
             // 
             infoGroupBox.Controls.Add(gibValueLabel);
@@ -269,7 +389,7 @@ namespace xNotepad64
             allowAbruptChunkCutoffCheckBox.Name = "allowAbruptChunkCutoffCheckBox";
             allowAbruptChunkCutoffCheckBox.Size = new Size(432, 24);
             allowAbruptChunkCutoffCheckBox.TabIndex = 5;
-            allowAbruptChunkCutoffCheckBox.Text = "Konsequentes abschneiden von W�rtern und Zahlen erlauben";
+            allowAbruptChunkCutoffCheckBox.Text = "Konsequentes abschneiden von Wörtern und Zahlen erlauben";
             allowAbruptChunkCutoffCheckBox.UseVisualStyleBackColor = true;
             // 
             // hintLabel
@@ -304,7 +424,7 @@ namespace xNotepad64
             footerPanel.Controls.Add(btnCancel);
             footerPanel.Dock = DockStyle.Fill;
             footerPanel.FlowDirection = FlowDirection.RightToLeft;
-            footerPanel.Location = new Point(0, 425);
+            footerPanel.Location = new Point(0, 552);
             footerPanel.Margin = new Padding(0);
             footerPanel.Name = "footerPanel";
             footerPanel.Padding = new Padding(10);
@@ -333,7 +453,7 @@ namespace xNotepad64
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(620, 493);
+            ClientSize = new Size(620, 620);
             Controls.Add(mainLayoutPanel);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -382,5 +502,17 @@ namespace xNotepad64
         private Label fontNameCaptionLabel;
         private Label fontSummaryLabel;
         private Label fontPreviewLabel;
+        private GroupBox languageGroupBox;
+        private Label languageDescriptionValueLabel;
+        private Label languageDescriptionCaptionLabel;
+        private Label languageAuthorValueLabel;
+        private Label languageAuthorCaptionLabel;
+        private Label languageVersionValueLabel;
+        private Label languageVersionCaptionLabel;
+        private Label languageCultureValueLabel;
+        private Label languageCultureCaptionLabel;
+        private ComboBox languageComboBox;
+        private Label languageLabel;
     }
 }
+

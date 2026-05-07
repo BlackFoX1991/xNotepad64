@@ -80,10 +80,12 @@ namespace xNotepad64
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                throw new ArgumentException("A valid file path is required.", nameof(filePath));
+                throw new ArgumentException(LocalizationManager.Get("textfile.error.valid_file_path", "Ein gueltiger Dateipfad ist erforderlich."), nameof(filePath));
             }
 
-            progress?.Report(new OperationProgress("Datei wird analysiert", "Zeichencodierung wird erkannt."));
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.analyze.stage", "Datei wird analysiert"),
+                LocalizationManager.Get("textfile.progress.analyze.detail", "Zeichencodierung wird erkannt.")));
 
             (Encoding encoding, DocumentEncodingKind encodingKind, byte[] preamble) = await DetectEncodingAsync(filePath, cancellationToken);
             List<Chunk> chunkBlocks = await InitializeChunkBlocksAsync(filePath, encodingKind, preamble.Length, progress, cancellationToken);
@@ -118,7 +120,11 @@ namespace xNotepad64
 
             if (ModifiedChunks.TryGetValue(chunkIndex, out string? draft))
             {
-                progress?.Report(new OperationProgress("Chunk geladen", $"Chunk {chunkIndex + 1} wurde aus dem Zwischenspeicher geladen.", 1, 1));
+                progress?.Report(new OperationProgress(
+                    LocalizationManager.Get("textfile.progress.chunk_cached.stage", "Chunk geladen"),
+                    LocalizationManager.Format("textfile.progress.chunk_cached.detail", "Chunk {0} wurde aus dem Zwischenspeicher geladen.", chunkIndex + 1),
+                    1,
+                    1));
                 return draft;
             }
 
@@ -149,7 +155,11 @@ namespace xNotepad64
 
             if (ModifiedChunks.Count == 0)
             {
-                progress?.Report(new OperationProgress("Speichern uebersprungen", "Es liegen keine Aenderungen vor.", 1, 1));
+                progress?.Report(new OperationProgress(
+                    LocalizationManager.Get("textfile.progress.save_skipped.stage", "Speichern uebersprungen"),
+                    LocalizationManager.Get("textfile.progress.save_skipped.detail", "Es liegen keine Aenderungen vor."),
+                    1,
+                    1));
                 return;
             }
 
@@ -162,7 +172,7 @@ namespace xNotepad64
 
             if (string.IsNullOrWhiteSpace(destinationPath))
             {
-                throw new ArgumentException("A valid destination path is required.", nameof(destinationPath));
+                throw new ArgumentException(LocalizationManager.Get("textfile.error.destination_path", "Ein gueltiger Zielpfad ist erforderlich."), nameof(destinationPath));
             }
 
             string normalizedDestinationPath = Path.GetFullPath(destinationPath);
@@ -208,7 +218,11 @@ namespace xNotepad64
                             byte[] encodedContent = FileEncoding.GetBytes(replacement);
                             await targetStream.WriteAsync(encodedContent, cancellationToken);
                             writtenSourceBytes += chunk.Length;
-                            progress?.Report(new OperationProgress("Datei wird gespeichert", $"Chunk {chunk.Index + 1}/{ChunkBlocks.Count} wird ersetzt.", writtenSourceBytes, totalBytes));
+                            progress?.Report(new OperationProgress(
+                                LocalizationManager.Get("textfile.progress.save.stage", "Datei wird gespeichert"),
+                                LocalizationManager.Format("textfile.progress.save.replace_detail", "Chunk {0}/{1} wird ersetzt.", chunk.Index + 1, ChunkBlocks.Count),
+                                writtenSourceBytes,
+                                totalBytes));
                             continue;
                         }
 
@@ -262,7 +276,7 @@ namespace xNotepad64
 
             if (query.SearchTerm.Length == 0)
             {
-                throw new ArgumentException("A non-empty search term is required.", nameof(query));
+                throw new ArgumentException(LocalizationManager.Get("textfile.error.non_empty_search_term", "Ein nicht-leerer Suchbegriff ist erforderlich."), nameof(query));
             }
 
             var results = new List<SearchResult>();
@@ -287,31 +301,147 @@ namespace xNotepad64
                     : null;
 
                 char? nextLeadingChar = string.IsNullOrEmpty(nextChunkContent) ? null : nextChunkContent[0];
-                int index = chunkContent.IndexOf(query.SearchTerm, comparison);
-
-                while (index != -1)
-                {
-                    if (!query.WholeWord || IsWholeWordMatch(chunkContent, index, query.SearchTerm.Length, previousTrailingChar, nextLeadingChar))
-                    {
-                        results.Add(new SearchResult
-                        {
-                            ChunkIndex = chunk.Index,
-                            PositionInChunk = index,
-                            MatchLength = query.SearchTerm.Length,
-                            Preview = BuildPreview(chunkContent, index, query.SearchTerm.Length)
-                        });
-                    }
-
-                    index = chunkContent.IndexOf(query.SearchTerm, index + query.SearchTerm.Length, comparison);
-                }
+                results.AddRange(FindMatchesInChunk(query, chunk.Index, chunkContent, previousTrailingChar, nextLeadingChar, comparison));
 
                 processedBytes += chunk.Length;
-                progress?.Report(new OperationProgress("Suche laeuft", $"Chunk {chunk.Index + 1}/{ChunkBlocks.Count} wird durchsucht.", processedBytes, totalBytes));
+                progress?.Report(new OperationProgress(
+                    LocalizationManager.Get("textfile.progress.search.stage", "Suche laeuft"),
+                    LocalizationManager.Format("textfile.progress.search.detail", "Chunk {0}/{1} wird durchsucht.", chunk.Index + 1, ChunkBlocks.Count),
+                    processedBytes,
+                    totalBytes));
                 previousTrailingChar = string.IsNullOrEmpty(chunkContent) ? previousTrailingChar : chunkContent[^1];
             }
 
-            progress?.Report(new OperationProgress("Suche abgeschlossen", $"{results.Count} Treffer gefunden.", totalBytes, totalBytes));
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.search_done.stage", "Suche abgeschlossen"),
+                LocalizationManager.Format("textfile.progress.search_done.detail", "{0} Treffer gefunden.", results.Count),
+                totalBytes,
+                totalBytes));
             return results;
+        }
+
+        public static async Task<ReplaceResult> ReplaceAsync(SearchQueryOptions query, SearchResult target, string replacementText, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+        {
+            EnsureFileIsOpen();
+            ArgumentNullException.ThrowIfNull(query);
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(replacementText);
+
+            if (target.ChunkIndex < 0 || target.ChunkIndex >= ChunkBlocks.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(target));
+            }
+
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.replace_one.stage", "Treffer wird ersetzt"),
+                LocalizationManager.Get("textfile.progress.replace_one.detail", "Ziel-Chunk wird geladen.")));
+
+            string chunkContent = await LoadChunkContentForSearchAsync(target.ChunkIndex, cancellationToken);
+            string originalBaseline = TryGetOriginalChunkText(target.ChunkIndex, out string originalChunkText)
+                ? originalChunkText
+                : chunkContent;
+
+            char? previousTrailingChar = target.ChunkIndex > 0
+                ? await GetTrailingCharacterAsync(target.ChunkIndex - 1, cancellationToken)
+                : null;
+            char? nextLeadingChar = target.ChunkIndex + 1 < ChunkBlocks.Count
+                ? await GetLeadingCharacterAsync(target.ChunkIndex + 1, cancellationToken)
+                : null;
+
+            if (!IsMatchAt(query, chunkContent, target.PositionInChunk, previousTrailingChar, nextLeadingChar))
+            {
+                throw new InvalidOperationException(LocalizationManager.Get("textfile.error.target_outdated", "Der ausgewaehlte Treffer ist nicht mehr aktuell. Bitte die Suche erneut ausfuehren."));
+            }
+
+            string currentMatchText = chunkContent.Substring(target.PositionInChunk, query.SearchTerm.Length);
+            bool changed = !string.Equals(currentMatchText, replacementText, StringComparison.Ordinal);
+            string updatedContent = changed
+                ? ReplaceRange(chunkContent, target.PositionInChunk, query.SearchTerm.Length, replacementText)
+                : chunkContent;
+
+            SetChunkDraft(target.ChunkIndex, updatedContent, originalBaseline);
+
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.replace_one_done.stage", "Treffer ersetzt"),
+                LocalizationManager.Format("textfile.progress.replace_one_done.detail", "Chunk {0} wurde aktualisiert.", target.ChunkIndex + 1),
+                1,
+                1));
+
+            return new ReplaceResult
+            {
+                Changed = changed,
+                ReplacementLocation = new SearchResult
+                {
+                    ChunkIndex = target.ChunkIndex,
+                    PositionInChunk = target.PositionInChunk,
+                    MatchLength = replacementText.Length,
+                    Preview = BuildPreview(updatedContent, target.PositionInChunk, Math.Max(replacementText.Length, 0))
+                }
+            };
+        }
+
+        public static async Task<ReplaceAllResult> ReplaceAllAsync(SearchQueryOptions query, string replacementText, IProgress<OperationProgress>? progress, CancellationToken cancellationToken)
+        {
+            EnsureFileIsOpen();
+            ArgumentNullException.ThrowIfNull(query);
+            ArgumentNullException.ThrowIfNull(replacementText);
+
+            StringComparison comparison = query.MatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            long totalBytes = ChunkBlocks.Sum(chunk => chunk.Length);
+            long processedBytes = 0;
+            int matchCount = 0;
+            int changedCount = 0;
+            char? previousTrailingChar = null;
+
+            string? nextChunkContent = ChunkBlocks.Count > 0
+                ? await LoadChunkContentForSearchAsync(0, cancellationToken)
+                : null;
+
+            for (int chunkIndex = 0; chunkIndex < ChunkBlocks.Count; chunkIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                Chunk chunk = ChunkBlocks[chunkIndex];
+                string chunkContent = nextChunkContent ?? string.Empty;
+
+                nextChunkContent = chunkIndex + 1 < ChunkBlocks.Count
+                    ? await LoadChunkContentForSearchAsync(chunkIndex + 1, cancellationToken)
+                    : null;
+
+                char? nextLeadingChar = string.IsNullOrEmpty(nextChunkContent) ? null : nextChunkContent[0];
+                List<SearchResult> matches = FindMatchesInChunk(query, chunk.Index, chunkContent, previousTrailingChar, nextLeadingChar, comparison);
+
+                if (matches.Count > 0)
+                {
+                    string originalBaseline = TryGetOriginalChunkText(chunk.Index, out string originalChunkText)
+                        ? originalChunkText
+                        : chunkContent;
+                    string updatedContent = ReplaceMatchesInChunk(chunkContent, matches, replacementText, out int changedInChunk);
+                    SetChunkDraft(chunk.Index, updatedContent, originalBaseline);
+                    matchCount += matches.Count;
+                    changedCount += changedInChunk;
+                }
+
+                processedBytes += chunk.Length;
+                progress?.Report(new OperationProgress(
+                    LocalizationManager.Get("textfile.progress.replace_all.stage", "Alle Treffer werden ersetzt"),
+                    LocalizationManager.Format("textfile.progress.replace_all.detail", "Chunk {0}/{1} wird verarbeitet.", chunk.Index + 1, ChunkBlocks.Count),
+                    processedBytes,
+                    totalBytes));
+                previousTrailingChar = string.IsNullOrEmpty(chunkContent) ? previousTrailingChar : chunkContent[^1];
+            }
+
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.replace_all_done.stage", "Ersetzen abgeschlossen"),
+                LocalizationManager.Format("textfile.progress.replace_all_done.detail", "{0} Ersetzungen angewendet.", changedCount),
+                totalBytes,
+                totalBytes));
+
+            return new ReplaceAllResult
+            {
+                MatchCount = matchCount,
+                ChangedCount = changedCount
+            };
         }
 
         public static int FindChunkIndexByOffset(long offset)
@@ -373,7 +503,7 @@ namespace xNotepad64
             {
                 if (MaximumChunkSize <= 0)
                 {
-                    throw new InvalidOperationException("MaximumChunkSize must be greater than zero.");
+                    throw new InvalidOperationException(LocalizationManager.Get("textfile.error.max_chunk_size", "MaximumChunkSize muss groesser als null sein."));
                 }
 
                 var chunkBlocks = new List<Chunk>();
@@ -386,7 +516,11 @@ namespace xNotepad64
                 if (contentStart == fileLength)
                 {
                     chunkBlocks.Add(new Chunk(0, contentStart, 0));
-                    progress?.Report(new OperationProgress("Datei vorbereitet", "Leere Datei erkannt.", 1, 1));
+                    progress?.Report(new OperationProgress(
+                        LocalizationManager.Get("textfile.progress.prepare_empty.stage", "Datei vorbereitet"),
+                        LocalizationManager.Get("textfile.progress.prepare_empty.detail", "Leere Datei erkannt."),
+                        1,
+                        1));
                     return chunkBlocks;
                 }
 
@@ -425,8 +559,8 @@ namespace xNotepad64
                     index++;
 
                     progress?.Report(new OperationProgress(
-                        "Chunks werden vorbereitet",
-                        $"Chunk {index} endet bei Byte {FormatOffset(end)}.",
+                        LocalizationManager.Get("textfile.progress.prepare_chunks.stage", "Chunks werden vorbereitet"),
+                        LocalizationManager.Format("textfile.progress.prepare_chunks.detail", "Chunk {0} endet bei Byte {1}.", index, FormatOffset(end)),
                         currentPosition - contentStart,
                         contentLength));
                 }
@@ -436,7 +570,11 @@ namespace xNotepad64
                     chunkBlocks.Add(new Chunk(0, contentStart, 0));
                 }
 
-                progress?.Report(new OperationProgress("Datei vorbereitet", $"{chunkBlocks.Count} Chunks erstellt.", contentLength, contentLength));
+                progress?.Report(new OperationProgress(
+                    LocalizationManager.Get("textfile.progress.prepare_done.stage", "Datei vorbereitet"),
+                    LocalizationManager.Format("textfile.progress.prepare_done.detail", "{0} Chunks erstellt.", chunkBlocks.Count),
+                    contentLength,
+                    contentLength));
                 return chunkBlocks;
             }, cancellationToken);
         }
@@ -445,7 +583,7 @@ namespace xNotepad64
         {
             if (chunk.Length > int.MaxValue)
             {
-                throw new InvalidOperationException("The chunk is too large for the editor control. Reduce MaximumChunkSize.");
+                throw new InvalidOperationException(LocalizationManager.Get("textfile.error.chunk_too_large", "Der Chunk ist fuer das Editor-Steuerelement zu gross. Bitte die maximale Chunk-Groesse reduzieren."));
             }
 
             bool ownsStream = existingStream is null;
@@ -462,18 +600,22 @@ namespace xNotepad64
                 int bytesRead = await stream.ReadAsync(buffer.AsMemory(totalRead, buffer.Length - totalRead), cancellationToken);
                 if (bytesRead == 0)
                 {
-                    throw new EndOfStreamException("Unexpected end of stream while reading the chunk.");
+                    throw new EndOfStreamException(LocalizationManager.Get("textfile.error.unexpected_end_read_chunk", "Das Dateiende wurde beim Laden eines Chunks unerwartet erreicht."));
                 }
 
                 totalRead += bytesRead;
                 progress?.Report(new OperationProgress(
-                    "Chunk wird geladen",
-                    $"Chunk {chunk.Index + 1}/{ChunkBlocks.Count} wird gelesen.",
+                    LocalizationManager.Get("textfile.progress.read_chunk.stage", "Chunk wird geladen"),
+                    LocalizationManager.Format("textfile.progress.read_chunk.detail", "Chunk {0}/{1} wird gelesen.", chunk.Index + 1, ChunkBlocks.Count),
                     totalRead,
                     buffer.Length));
             }
 
-            progress?.Report(new OperationProgress("Chunk geladen", $"Chunk {chunk.Index + 1} ist bereit.", buffer.Length, buffer.Length));
+            progress?.Report(new OperationProgress(
+                LocalizationManager.Get("textfile.progress.read_chunk_done.stage", "Chunk geladen"),
+                LocalizationManager.Format("textfile.progress.read_chunk_done.detail", "Chunk {0} ist bereit.", chunk.Index + 1),
+                buffer.Length,
+                buffer.Length));
             return FileEncoding.GetString(buffer);
         }
 
@@ -485,6 +627,28 @@ namespace xNotepad64
             }
 
             return await ReadChunkAsync(ChunkBlocks[chunkIndex], progress: null, cancellationToken);
+        }
+
+        private static async Task<char?> GetLeadingCharacterAsync(int chunkIndex, CancellationToken cancellationToken)
+        {
+            if (chunkIndex < 0 || chunkIndex >= ChunkBlocks.Count)
+            {
+                return null;
+            }
+
+            string content = await LoadChunkContentForSearchAsync(chunkIndex, cancellationToken);
+            return string.IsNullOrEmpty(content) ? null : content[0];
+        }
+
+        private static async Task<char?> GetTrailingCharacterAsync(int chunkIndex, CancellationToken cancellationToken)
+        {
+            if (chunkIndex < 0 || chunkIndex >= ChunkBlocks.Count)
+            {
+                return null;
+            }
+
+            string content = await LoadChunkContentForSearchAsync(chunkIndex, cancellationToken);
+            return string.IsNullOrEmpty(content) ? null : content[^1];
         }
 
         private static async Task<(Encoding Encoding, DocumentEncodingKind EncodingKind, byte[] Preamble)> DetectEncodingAsync(string filePath, CancellationToken cancellationToken)
@@ -961,7 +1125,7 @@ namespace xNotepad64
 
             if (value < 0)
             {
-                throw new EndOfStreamException("Unexpected end of stream while aligning chunk boundaries.");
+                throw new EndOfStreamException(LocalizationManager.Get("textfile.error.unexpected_end_align", "Das Dateiende wurde beim Ausrichten der Chunk-Grenzen unerwartet erreicht."));
             }
 
             return value;
@@ -985,7 +1149,7 @@ namespace xNotepad64
 
                 if (bytesRead == 0)
                 {
-                    throw new EndOfStreamException("Unexpected end of stream while copying the original file.");
+                    throw new EndOfStreamException(LocalizationManager.Get("textfile.error.unexpected_end_copy", "Das Dateiende wurde beim Kopieren der Originaldatei unerwartet erreicht."));
                 }
 
                 await targetStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
@@ -993,8 +1157,8 @@ namespace xNotepad64
                 processedWithinChunk += bytesRead;
 
                 progress?.Report(new OperationProgress(
-                    "Datei wird gespeichert",
-                    $"Chunk {chunk.Index + 1}/{ChunkBlocks.Count} wird geschrieben.",
+                    LocalizationManager.Get("textfile.progress.save.stage", "Datei wird gespeichert"),
+                    LocalizationManager.Format("textfile.progress.save.copy_detail", "Chunk {0}/{1} wird geschrieben.", chunk.Index + 1, ChunkBlocks.Count),
                     Math.Min(totalBytes, chunk.Start - _filePreamble.Length + processedWithinChunk),
                     totalBytes));
             }
@@ -1009,6 +1173,78 @@ namespace xNotepad64
             }
 
             await Task.Run(() => File.Move(tempPath, destinationPath), cancellationToken);
+        }
+
+        private static List<SearchResult> FindMatchesInChunk(SearchQueryOptions query, int chunkIndex, string chunkContent, char? previousTrailingChar, char? nextLeadingChar, StringComparison comparison)
+        {
+            var matches = new List<SearchResult>();
+            int index = chunkContent.IndexOf(query.SearchTerm, comparison);
+
+            while (index != -1)
+            {
+                if (!query.WholeWord || IsWholeWordMatch(chunkContent, index, query.SearchTerm.Length, previousTrailingChar, nextLeadingChar))
+                {
+                    matches.Add(new SearchResult
+                    {
+                        ChunkIndex = chunkIndex,
+                        PositionInChunk = index,
+                        MatchLength = query.SearchTerm.Length,
+                        Preview = BuildPreview(chunkContent, index, query.SearchTerm.Length)
+                    });
+                }
+
+                index = chunkContent.IndexOf(query.SearchTerm, index + query.SearchTerm.Length, comparison);
+            }
+
+            return matches;
+        }
+
+        private static bool IsMatchAt(SearchQueryOptions query, string chunkContent, int index, char? previousTrailingChar, char? nextLeadingChar)
+        {
+            if (index < 0 || index + query.SearchTerm.Length > chunkContent.Length)
+            {
+                return false;
+            }
+
+            StringComparison comparison = query.MatchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            if (!string.Equals(chunkContent.Substring(index, query.SearchTerm.Length), query.SearchTerm, comparison))
+            {
+                return false;
+            }
+
+            return !query.WholeWord || IsWholeWordMatch(chunkContent, index, query.SearchTerm.Length, previousTrailingChar, nextLeadingChar);
+        }
+
+        private static string ReplaceRange(string content, int startIndex, int length, string replacementText)
+        {
+            return string.Concat(content.AsSpan(0, startIndex), replacementText.AsSpan(), content.AsSpan(startIndex + length));
+        }
+
+        private static string ReplaceMatchesInChunk(string chunkContent, IReadOnlyList<SearchResult> matches, string replacementText, out int changedCount)
+        {
+            changedCount = 0;
+            if (matches.Count == 0)
+            {
+                return chunkContent;
+            }
+
+            var builder = new StringBuilder(chunkContent);
+
+            for (int i = matches.Count - 1; i >= 0; i--)
+            {
+                SearchResult match = matches[i];
+                string currentMatchText = builder.ToString(match.PositionInChunk, match.MatchLength);
+                if (string.Equals(currentMatchText, replacementText, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                builder.Remove(match.PositionInChunk, match.MatchLength);
+                builder.Insert(match.PositionInChunk, replacementText);
+                changedCount++;
+            }
+
+            return builder.ToString();
         }
 
         private static long GetModifiedLengthDelta()
@@ -1084,7 +1320,7 @@ namespace xNotepad64
         {
             if (string.IsNullOrWhiteSpace(FilePath))
             {
-                throw new InvalidOperationException("No file is currently open.");
+                throw new InvalidOperationException(LocalizationManager.Get("textfile.error.no_open_file", "Es ist aktuell keine Datei geoeffnet."));
             }
         }
     }

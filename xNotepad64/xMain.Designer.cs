@@ -216,7 +216,7 @@
             searchToolStripMenuItem.Image = (Image)resources.GetObject("searchToolStripMenuItem.Image");
             searchToolStripMenuItem.Name = "searchToolStripMenuItem";
             searchToolStripMenuItem.Size = new Size(223, 24);
-            searchToolStripMenuItem.Text = "Suchen...";
+            searchToolStripMenuItem.Text = "Suchen und ersetzen...";
             // 
             // extrasToolStripMenuItem
             // 
@@ -330,7 +330,7 @@
             TextContent.Multiline = true;
             TextContent.Name = "TextContent";
             TextContent.ScrollBars = ScrollBars.Both;
-            TextContent.Size = new Size(821, 588);
+            TextContent.Size = new Size(819, 588);
             TextContent.TabIndex = 3;
             // 
             // splitContainer1
@@ -347,7 +347,7 @@
             // 
             splitContainer1.Panel2.Controls.Add(TextContent);
             splitContainer1.Size = new Size(1062, 588);
-            splitContainer1.SplitterDistance = 237;
+            splitContainer1.SplitterDistance = 239;
             splitContainer1.TabIndex = 4;
             // 
             // lvwChunks
@@ -358,7 +358,7 @@
             lvwChunks.GridLines = true;
             lvwChunks.Location = new Point(0, 0);
             lvwChunks.Name = "lvwChunks";
-            lvwChunks.Size = new Size(237, 588);
+            lvwChunks.Size = new Size(239, 588);
             lvwChunks.TabIndex = 0;
             lvwChunks.UseCompatibleStateImageBehavior = false;
             lvwChunks.View = View.Details;

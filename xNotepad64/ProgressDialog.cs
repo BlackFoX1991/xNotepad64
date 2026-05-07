@@ -7,13 +7,22 @@ namespace xNotepad64
         public ProgressDialog()
         {
             InitializeComponent();
+            ApplyLocalization();
+        }
+
+        public void ApplyLocalization()
+        {
+            Text = LocalizationManager.Get("progress.default_title", "Vorgang laeuft");
+            stageLabel.Text = LocalizationManager.Get("progress.default_title", "Vorgang laeuft");
+            detailLabel.Text = LocalizationManager.Get("progress.default_detail", "Vorgang wird vorbereitet...");
+            cancelButton.Text = LocalizationManager.Get("progress.cancel", "Abbruch");
         }
 
         public void Configure(string title)
         {
             Text = title;
             stageLabel.Text = title;
-            detailLabel.Text = "Vorgang wird vorbereitet...";
+            detailLabel.Text = LocalizationManager.Get("progress.default_detail", "Vorgang wird vorbereitet...");
             operationProgressBar.Style = ProgressBarStyle.Marquee;
             operationProgressBar.Value = 0;
             cancelButton.Enabled = true;
@@ -27,7 +36,9 @@ namespace xNotepad64
         public void ReportProgress(OperationProgress progress)
         {
             stageLabel.Text = string.IsNullOrWhiteSpace(progress.Stage) ? Text : progress.Stage;
-            detailLabel.Text = string.IsNullOrWhiteSpace(progress.Detail) ? "Bitte warten..." : progress.Detail;
+            detailLabel.Text = string.IsNullOrWhiteSpace(progress.Detail)
+                ? LocalizationManager.Get("progress.please_wait", "Bitte warten...")
+                : progress.Detail;
 
             if (progress.IsIndeterminate)
             {
@@ -46,7 +57,7 @@ namespace xNotepad64
         private void cancelButton_Click(object? sender, EventArgs e)
         {
             cancelButton.Enabled = false;
-            detailLabel.Text = "Abbruch wird angefordert...";
+            detailLabel.Text = LocalizationManager.Get("progress.cancelling", "Abbruch wird angefordert...");
             _cancellationTokenSource?.Cancel();
         }
     }

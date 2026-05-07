@@ -74,6 +74,7 @@ namespace xNotepad64
             _undoSnapshotTimer.Tick += undoSnapshotTimer_Tick;
 
             InitializeStatusStrip();
+            ApplyLocalization();
             LoadEditorText(string.Empty, string.Empty);
             UpdateWindowState();
         }
@@ -92,6 +93,41 @@ namespace xNotepad64
             searchToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.F;
             speichernunterToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.S;
             FormClosing += xMain_FormClosing;
+        }
+
+        private void ApplyLocalization()
+        {
+            dateiToolStripMenuItem.Text = T("main.menu.file", "&Datei");
+            neuToolStripMenuItem.Text = T("main.menu.new", "&Neu");
+            öffnenToolStripMenuItem.Text = T("main.menu.open", "Ö&ffnen");
+            speichernToolStripMenuItem.Text = T("main.menu.save", "&Speichern");
+            speichernunterToolStripMenuItem.Text = T("main.menu.save_as", "Speichern &unter");
+            beendenToolStripMenuItem.Text = T("main.menu.exit", "&Beenden");
+            bearbeitenToolStripMenuItem.Text = T("main.menu.edit", "&Bearbeiten");
+            rückgängigToolStripMenuItem.Text = T("main.menu.undo", "&Rueckgaengig");
+            wiederholenToolStripMenuItem.Text = T("main.menu.redo", "&Wiederholen");
+            ausschneidenToolStripMenuItem.Text = T("main.menu.cut", "Aussc&hneiden");
+            kopierenToolStripMenuItem.Text = T("main.menu.copy", "&Kopieren");
+            einfügenToolStripMenuItem.Text = T("main.menu.paste", "&Einfuegen");
+            allesauswählenToolStripMenuItem.Text = T("main.menu.select_all", "&Alles auswaehlen");
+            searchToolStripMenuItem.Text = T("main.menu.search_replace", "Suchen und ersetzen...");
+            extrasToolStripMenuItem.Text = T("main.menu.extras", "E&xtras");
+            optionenToolStripMenuItem.Text = T("main.menu.options", "&Optionen");
+            hilfeToolStripMenuItem.Text = T("main.menu.help", "&Hilfe");
+            infoToolStripMenuItem.Text = T("main.menu.about", "Inf&o...");
+
+            neuToolStripButton.Text = T("main.toolbar.new", "&Neu");
+            öffnenToolStripButton.Text = T("main.toolbar.open", "Ö&ffnen");
+            speichernToolStripButton.Text = T("main.toolbar.save", "&Speichern");
+            ausschneidenToolStripButton.Text = T("main.toolbar.cut", "&Ausschneiden");
+            kopierenToolStripButton.Text = T("main.toolbar.copy", "&Kopieren");
+            einfügenToolStripButton.Text = T("main.toolbar.paste", "&Einfuegen");
+
+            ChunkCol.Text = T("main.chunk.column", "Block");
+            SizeCol.Text = T("main.size.column", "Groesse");
+
+            _searchWindow?.ApplyLocalization();
+            UpdateWindowState();
         }
 
         private void WireEditCommands()
@@ -168,10 +204,10 @@ namespace xNotepad64
             using var dialog = new SaveFileDialog
             {
                 AddExtension = false,
-                FileName = "Neues Dokument.txt",
-                Filter = "Alle Dateien|*.*",
+                FileName = T("main.dialog.new_document_default_name", "Neues Dokument.txt"),
+                Filter = T("main.dialog.all_files_filter", "Alle Dateien|*.*"),
                 OverwritePrompt = true,
-                Title = "Neues Dokument erstellen"
+                Title = T("main.dialog.new_document_title", "Neues Dokument erstellen")
             };
 
             if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -186,7 +222,7 @@ namespace xNotepad64
             }
             catch (Exception ex)
             {
-                ShowError("Das neue Dokument konnte nicht erstellt werden.", ex);
+                ShowError(T("main.error.new_document", "Das neue Dokument konnte nicht erstellt werden."), ex);
             }
         }
 
@@ -205,8 +241,8 @@ namespace xNotepad64
             using var dialog = new OpenFileDialog
             {
                 CheckFileExists = true,
-                Filter = "Alle Dateien|*.*",
-                Title = "Grosse Datei oeffnen"
+                Filter = T("main.dialog.all_files_filter", "Alle Dateien|*.*"),
+                Title = T("main.dialog.open_title", "Grosse Datei oeffnen")
             };
 
             if (dialog.ShowDialog() != DialogResult.OK)
@@ -238,10 +274,10 @@ namespace xNotepad64
             {
                 AddExtension = false,
                 FileName = Textfile.FileName,
-                Filter = "Alle Dateien|*.*",
+                Filter = T("main.dialog.all_files_filter", "Alle Dateien|*.*"),
                 InitialDirectory = Path.GetDirectoryName(Textfile.FilePath),
                 OverwritePrompt = true,
-                Title = "Datei speichern unter"
+                Title = T("main.dialog.save_as_title", "Datei speichern unter")
             };
 
             if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -328,7 +364,14 @@ namespace xNotepad64
             }
 
             _settings = newSettings;
+            LocalizationDocument? selectedLanguage = LocalizationManager.SetCurrentLanguage(_settings.LanguageFileName);
+            if (selectedLanguage is not null)
+            {
+                _settings.LanguageFileName = selectedLanguage.FileName;
+            }
+
             ApplySettingsToRuntime();
+            ApplyLocalization();
             await PersistSettingsAsync();
             UpdateStatus();
 
@@ -345,6 +388,7 @@ namespace xNotepad64
                 _searchWindow = new searchResults();
                 _searchWindow.NavigateToResultRequested += SearchWindow_NavigateToResultRequested;
                 _searchWindow.FormClosed += SearchWindow_FormClosed;
+                _searchWindow.ConfigureDocumentCallbacks(PrepareSearchWindowDocumentAsync, RefreshVisibleChunkAsync, SetBusyState);
                 WindowPlacementService.Apply(_searchWindow, _settings.SearchWindowPlacement);
             }
 
@@ -379,6 +423,41 @@ namespace xNotepad64
             _searchWindow = null;
         }
 
+        private Task PrepareSearchWindowDocumentAsync()
+        {
+            CommitCurrentChunkIfNeeded();
+            return Task.CompletedTask;
+        }
+
+        private async Task RefreshVisibleChunkAsync()
+        {
+            if (!Textfile.HasOpenFile)
+            {
+                UpdateWindowState();
+                return;
+            }
+
+            if (Textfile.CurrentChunkIndex < 0 || Textfile.CurrentChunkIndex >= Textfile.ChunkBlocks.Count)
+            {
+                UpdateWindowState();
+                return;
+            }
+
+            int selectionStart = TextContent.SelectionStart;
+            int selectionLength = TextContent.SelectionLength;
+            int currentChunkIndex = Textfile.CurrentChunkIndex;
+
+            string content = await Textfile.GetChunkTextAsync(currentChunkIndex, progress: null, cancellationToken: CancellationToken.None);
+            string baselineText = Textfile.TryGetOriginalChunkText(currentChunkIndex, out string originalChunkText)
+                ? originalChunkText
+                : content;
+
+            ApplyChunkSelection(currentChunkIndex);
+            LoadEditorText(content, baselineText);
+            ApplySelection(selectionStart, selectionLength);
+            UpdateWindowState();
+        }
+
         private async void xMain_FormClosing(object? sender, FormClosingEventArgs e)
         {
             if (_closeApproved)
@@ -405,7 +484,7 @@ namespace xNotepad64
             try
             {
                 ChunkLoadResult result = await RunEditorOperationAsync(
-                    "Datei oeffnen",
+                    T("main.progress.open", "Datei oeffnen"),
                     async (progress, cancellationToken) =>
                     {
                         await Textfile.OpenAsync(filePath, progress, cancellationToken);
@@ -429,11 +508,11 @@ namespace xNotepad64
             }
             catch (OperationCanceledException)
             {
-                UpdateStatus("Datei oeffnen abgebrochen.");
+                UpdateStatus(T("main.progress.open_cancelled", "Datei oeffnen abgebrochen."));
             }
             catch (Exception ex)
             {
-                ShowError("Die Datei konnte nicht geoeffnet werden.", ex);
+                ShowError(T("main.error.open_document", "Die Datei konnte nicht geoeffnet werden."), ex);
                 UpdateWindowState();
             }
         }
@@ -458,7 +537,7 @@ namespace xNotepad64
             try
             {
                 ChunkLoadResult result = await RunEditorOperationAsync(
-                    "Datei speichern",
+                    T("main.progress.save", "Datei speichern"),
                     async (progress, cancellationToken) =>
                     {
                         await Textfile.SaveAsync(progress, cancellationToken);
@@ -480,12 +559,12 @@ namespace xNotepad64
             }
             catch (OperationCanceledException)
             {
-                UpdateStatus("Speichern abgebrochen.");
+                UpdateStatus(T("main.progress.save_cancelled", "Speichern abgebrochen."));
                 return false;
             }
             catch (Exception ex)
             {
-                ShowError("Die Datei konnte nicht gespeichert werden.", ex);
+                ShowError(T("main.error.save_document", "Die Datei konnte nicht gespeichert werden."), ex);
                 return false;
             }
         }
@@ -503,7 +582,7 @@ namespace xNotepad64
             try
             {
                 ChunkLoadResult result = await RunEditorOperationAsync(
-                    "Datei speichern unter",
+                    T("main.progress.save_as", "Datei speichern unter"),
                     async (progress, cancellationToken) =>
                     {
                         await Textfile.SaveAsAsync(filePath, progress, cancellationToken);
@@ -526,12 +605,12 @@ namespace xNotepad64
             }
             catch (OperationCanceledException)
             {
-                UpdateStatus("Speichern unter abgebrochen.");
+                UpdateStatus(T("main.progress.save_as_cancelled", "Speichern unter abgebrochen."));
                 return false;
             }
             catch (Exception ex)
             {
-                ShowError("Die Datei konnte nicht unter dem neuen Namen gespeichert werden.", ex);
+                ShowError(T("main.error.save_as_document", "Die Datei konnte nicht unter dem neuen Namen gespeichert werden."), ex);
                 return false;
             }
         }
@@ -543,7 +622,7 @@ namespace xNotepad64
                 CommitCurrentChunkIfNeeded();
 
                 ChunkLoadResult result = await RunEditorOperationAsync(
-                    "Chunk laden",
+                    T("main.progress.load_chunk", "Chunk laden"),
                     async (progress, cancellationToken) =>
                     {
                         string text = await Textfile.GetChunkTextAsync(chunkIndex, progress, cancellationToken);
@@ -563,12 +642,12 @@ namespace xNotepad64
             catch (OperationCanceledException)
             {
                 RestoreCurrentSelection();
-                UpdateStatus("Chunk-Ladevorgang abgebrochen.");
+                UpdateStatus(T("main.progress.load_chunk_cancelled", "Chunk-Ladevorgang abgebrochen."));
             }
             catch (Exception ex)
             {
                 RestoreCurrentSelection();
-                ShowError("Der ausgewaehlte Chunk konnte nicht geladen werden.", ex);
+                ShowError(T("main.error.load_chunk", "Der ausgewaehlte Chunk konnte nicht geladen werden."), ex);
             }
         }
 
@@ -723,7 +802,7 @@ namespace xNotepad64
         {
             if (!Textfile.HasOpenFile || Textfile.CurrentChunkIndex < 0)
             {
-                throw new InvalidOperationException("Es ist aktuell kein bearbeitbarer Chunk aktiv.");
+                throw new InvalidOperationException(T("main.error.no_editable_chunk", "Es ist aktuell kein bearbeitbarer Chunk aktiv."));
             }
 
             if (!_chunkEditHistories.TryGetValue(Textfile.CurrentChunkIndex, out ChunkEditHistory? history))
@@ -810,8 +889,8 @@ namespace xNotepad64
             }
 
             DialogResult result = MessageBox.Show(
-                "Es gibt ungespeicherte Aenderungen in den geladenen Chunks. Soll die Datei vor dem Fortfahren gespeichert werden?",
-                "Ungespeicherte Aenderungen",
+                T("main.dialog.unsaved_message", "Es gibt ungespeicherte Aenderungen in den geladenen Chunks. Soll die Datei vor dem Fortfahren gespeichert werden?"),
+                T("main.dialog.unsaved_title", "Ungespeicherte Aenderungen"),
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Warning);
 
@@ -921,7 +1000,9 @@ namespace xNotepad64
         {
             bool hasOpenFile = Textfile.HasOpenFile;
 
-            Text = hasOpenFile ? $"{Textfile.FileName} - xNotepad64 [{Program_Version}]" : $"xNotepad64 [{Program_Version}]";
+            Text = hasOpenFile
+                ? TF("main.title.with_file", "{0} - {1} [{2}]", Textfile.FileName, T("app.name", "xNotepad64"), Program_Version)
+                : TF("main.title.no_file", "{0} [{1}]", T("app.name", "xNotepad64"), Program_Version);
             TextContent.ReadOnly = !hasOpenFile;
             lvwChunks.Enabled = hasOpenFile && !_isBusy;
             speichernToolStripMenuItem.Enabled = hasOpenFile;
@@ -944,7 +1025,7 @@ namespace xNotepad64
             _messageStatusLabel.Text = !string.IsNullOrWhiteSpace(overrideMessage)
                 ? overrideMessage
                 : BuildDefaultStatusMessage(dirtyChunkCount);
-            _messageStatusLabel.ToolTipText = Textfile.FilePath ?? "Keine Datei geoeffnet.";
+            _messageStatusLabel.ToolTipText = Textfile.FilePath ?? T("main.status.no_file_tooltip", "Keine Datei geoeffnet.");
 
             UpdateFileSizeStatus();
             UpdateChunkStatus();
@@ -974,18 +1055,20 @@ namespace xNotepad64
         {
             if (!Textfile.HasOpenFile)
             {
-                return "Keine Datei geoeffnet.";
+                return T("main.status.no_file", "Keine Datei geoeffnet.");
             }
 
-            return dirtyChunkCount > 0 ? "Aenderungen im Speicher." : "Bereit.";
+            return dirtyChunkCount > 0
+                ? T("main.status.changes_in_memory", "Aenderungen im Speicher.")
+                : T("main.status.ready", "Bereit.");
         }
 
         private void UpdateFileSizeStatus()
         {
             if (!Textfile.HasOpenFile)
             {
-                _fileSizeStatusLabel.Text = "Datei -";
-                _fileSizeStatusLabel.ToolTipText = "Keine Datei geoeffnet.";
+                _fileSizeStatusLabel.Text = $"{T("main.status.file_prefix", "Datei")} -";
+                _fileSizeStatusLabel.ToolTipText = T("main.status.no_file_tooltip", "Keine Datei geoeffnet.");
                 return;
             }
 
@@ -993,65 +1076,67 @@ namespace xNotepad64
             long savedLength = Textfile.SavedFileLength;
             bool hasProjectedSize = currentLength != savedLength;
 
-            _fileSizeStatusLabel.Text = $"Datei {Textfile.FormatBytes(currentLength)}{(hasProjectedSize ? "*" : string.Empty)}";
+            _fileSizeStatusLabel.Text = $"{T("main.status.file_prefix", "Datei")} {Textfile.FormatBytes(currentLength)}{(hasProjectedSize ? "*" : string.Empty)}";
             _fileSizeStatusLabel.ToolTipText = hasProjectedSize
-                ? $"Aktuelle Dokumentgroesse im Speicher: {Textfile.FormatBytes(currentLength)}. Zuletzt gespeichert: {Textfile.FormatBytes(savedLength)}."
-                : $"Aktuelle Dokumentgroesse: {Textfile.FormatBytes(currentLength)}.";
+                ? TF("main.status.file_size_dirty_tooltip", "Aktuelle Dokumentgroesse im Speicher: {0}. Zuletzt gespeichert: {1}.", Textfile.FormatBytes(currentLength), Textfile.FormatBytes(savedLength))
+                : TF("main.status.file_size_tooltip", "Aktuelle Dokumentgroesse: {0}.", Textfile.FormatBytes(currentLength));
         }
 
         private void UpdateChunkStatus()
         {
             if (!Textfile.HasOpenFile)
             {
-                _chunkStatusLabel.Text = "Chunks -";
-                _chunkStatusLabel.ToolTipText = "Keine Datei geoeffnet.";
+                _chunkStatusLabel.Text = $"{T("main.status.chunks_prefix", "Chunks")} -";
+                _chunkStatusLabel.ToolTipText = T("main.status.no_file_tooltip", "Keine Datei geoeffnet.");
                 return;
             }
 
             if (Textfile.CurrentChunkIndex < 0 || Textfile.CurrentChunkIndex >= Textfile.ChunkBlocks.Count)
             {
-                _chunkStatusLabel.Text = $"{Textfile.ChunkBlocks.Count:N0} Chunks";
-                _chunkStatusLabel.ToolTipText = "Es ist aktuell kein Chunk aktiv.";
+                _chunkStatusLabel.Text = $"{Textfile.ChunkBlocks.Count:N0} {T("main.status.chunks_prefix", "Chunks")}";
+                _chunkStatusLabel.ToolTipText = T("main.status.no_active_chunk_tooltip", "Es ist aktuell kein Chunk aktiv.");
                 return;
             }
 
             Chunk currentChunk = Textfile.ChunkBlocks[Textfile.CurrentChunkIndex];
-            _chunkStatusLabel.Text = $"Chunk {Textfile.CurrentChunkIndex + 1}/{Textfile.ChunkBlocks.Count} ({Textfile.FormatBytes(currentChunk.Length)})";
-            _chunkStatusLabel.ToolTipText = $"Aktueller Chunk startet bei Byte {Textfile.FormatOffset(currentChunk.Start)} und endet vor Byte {Textfile.FormatOffset(currentChunk.EndExclusive)}.";
+            _chunkStatusLabel.Text = $"{T("main.status.chunk_prefix", "Chunk")} {Textfile.CurrentChunkIndex + 1}/{Textfile.ChunkBlocks.Count} ({Textfile.FormatBytes(currentChunk.Length)})";
+            _chunkStatusLabel.ToolTipText = TF("main.status.chunk_tooltip", "Aktueller Chunk startet bei Byte {0} und endet vor Byte {1}.", Textfile.FormatOffset(currentChunk.Start), Textfile.FormatOffset(currentChunk.EndExclusive));
         }
 
         private void UpdateOffsetStatus()
         {
             if (!Textfile.HasOpenFile || Textfile.CurrentChunkIndex < 0 || Textfile.CurrentChunkIndex >= Textfile.ChunkBlocks.Count)
             {
-                _offsetStatusLabel.Text = "Offset -";
-                _offsetStatusLabel.ToolTipText = "Kein aktiver Chunk.";
+                _offsetStatusLabel.Text = $"{T("main.status.offset_prefix", "Offset")} -";
+                _offsetStatusLabel.ToolTipText = T("main.status.no_active_offset_tooltip", "Kein aktiver Chunk.");
                 return;
             }
 
             Chunk currentChunk = Textfile.ChunkBlocks[Textfile.CurrentChunkIndex];
-            _offsetStatusLabel.Text = $"Offset {Textfile.FormatOffset(currentChunk.Start)}";
-            _offsetStatusLabel.ToolTipText = $"Absoluter Startoffset des aktiven Chunks: {Textfile.FormatOffset(currentChunk.Start)}.";
+            _offsetStatusLabel.Text = $"{T("main.status.offset_prefix", "Offset")} {Textfile.FormatOffset(currentChunk.Start)}";
+            _offsetStatusLabel.ToolTipText = TF("main.status.offset_tooltip", "Absoluter Startoffset des aktiven Chunks: {0}.", Textfile.FormatOffset(currentChunk.Start));
         }
 
         private void UpdateChunkModeStatus()
         {
-            string cutMode = _settings.AllowAbruptChunkCutoff ? "abrupt" : "wortschonend";
-            _chunkModeStatusLabel.Text = $"Limit {Textfile.FormatBytes(_settings.MaximumChunkSizeBytes)}, {cutMode}";
-            _chunkModeStatusLabel.ToolTipText = $"Maximale Chunk-Groesse: {Textfile.FormatBytes(_settings.MaximumChunkSizeBytes)}. Schnittmodus: {cutMode}.";
+            string cutMode = _settings.AllowAbruptChunkCutoff
+                ? T("main.status.mode.abrupt", "abrupt")
+                : T("main.status.mode.word_safe", "wortschonend");
+            _chunkModeStatusLabel.Text = $"{T("main.status.limit_prefix", "Limit")} {Textfile.FormatBytes(_settings.MaximumChunkSizeBytes)}, {cutMode}";
+            _chunkModeStatusLabel.ToolTipText = TF("main.status.mode_tooltip", "Maximale Chunk-Groesse: {0}. Schnittmodus: {1}.", Textfile.FormatBytes(_settings.MaximumChunkSizeBytes), cutMode);
         }
 
         private void UpdateDirtyStatus(int dirtyChunkCount)
         {
-            _dirtyStatusLabel.Text = $"Aend. {dirtyChunkCount:N0}";
+            _dirtyStatusLabel.Text = $"{T("main.status.edits_prefix", "Aend.")} {dirtyChunkCount:N0}";
             _dirtyStatusLabel.ToolTipText = dirtyChunkCount == 0
-                ? "Keine ungespeicherten Chunk-Aenderungen."
-                : $"{dirtyChunkCount:N0} Chunk(s) enthalten ungespeicherte Aenderungen.";
+                ? T("main.status.no_edits_tooltip", "Keine ungespeicherten Chunk-Aenderungen.")
+                : TF("main.status.edits_tooltip", "{0} Chunk(s) enthalten ungespeicherte Aenderungen.", dirtyChunkCount);
         }
 
         private void UpdateFontStatus()
         {
-            _fontStatusLabel.Text = $"Font {_settings.TextFontFamily}, {_settings.TextFontSize:0.#} pt";
+            _fontStatusLabel.Text = $"{T("main.status.font_prefix", "Font")} {_settings.TextFontFamily}, {_settings.TextFontSize:0.#} pt";
             _fontStatusLabel.ToolTipText = _settings.GetTextFontSummary();
         }
 
@@ -1059,8 +1144,8 @@ namespace xNotepad64
         {
             if (!SystemMemoryInfo.TryGetSnapshot(out SystemMemorySnapshot snapshot))
             {
-                _memoryStatusLabel.Text = "RAM n/a";
-                _memoryStatusLabel.ToolTipText = "RAM-Information konnte nicht gelesen werden.";
+                _memoryStatusLabel.Text = T("main.status.memory_na", "RAM n/a");
+                _memoryStatusLabel.ToolTipText = T("main.status.memory_unavailable", "RAM-Information konnte nicht gelesen werden.");
                 return;
             }
 
@@ -1071,9 +1156,8 @@ namespace xNotepad64
             long availableBytes = ClampToInt64(snapshot.AvailablePhysicalBytes);
             long totalBytes = ClampToInt64(snapshot.TotalPhysicalBytes);
 
-            _memoryStatusLabel.Text = $"RAM {Textfile.FormatBytes(workingSetBytes)} von {Textfile.FormatBytes(availableBytes)} verf.";
-            _memoryStatusLabel.ToolTipText =
-                $"Working Set der App: {Textfile.FormatBytes(workingSetBytes)}. Verfuegbarer physischer RAM: {Textfile.FormatBytes(availableBytes)} von {Textfile.FormatBytes(totalBytes)} gesamt.";
+            _memoryStatusLabel.Text = TF("main.status.memory_text", "{0} {1} von {2} verf.", T("main.status.memory_prefix", "RAM"), Textfile.FormatBytes(workingSetBytes), Textfile.FormatBytes(availableBytes));
+            _memoryStatusLabel.ToolTipText = TF("main.status.memory_tooltip", "Working Set der App: {0}. Verfuegbarer physischer RAM: {1} von {2} gesamt.", Textfile.FormatBytes(workingSetBytes), Textfile.FormatBytes(availableBytes), Textfile.FormatBytes(totalBytes));
         }
 
         private void memoryRefreshTimer_Tick(object? sender, EventArgs e)
@@ -1084,7 +1168,7 @@ namespace xNotepad64
         private string BuildChunkLabel(int chunkIndex)
         {
             string prefix = IsChunkDirty(chunkIndex) ? "* " : string.Empty;
-            return $"{prefix}Chunk {chunkIndex + 1}";
+            return $"{prefix}{T("main.status.chunk_prefix", "Chunk")} {chunkIndex + 1}";
         }
 
         private bool IsChunkDirty(int chunkIndex)
@@ -1161,7 +1245,17 @@ namespace xNotepad64
 
         private static void ShowError(string message, Exception ex)
         {
-            MessageBox.Show($"{message}{Environment.NewLine}{Environment.NewLine}{ex.Message}", "xNotepad64", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"{message}{Environment.NewLine}{Environment.NewLine}{ex.Message}", T("app.name", "xNotepad64"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private static string T(string key, string fallback)
+        {
+            return LocalizationManager.Get(key, fallback);
+        }
+
+        private static string TF(string key, string fallback, params object[] arguments)
+        {
+            return LocalizationManager.Format(key, fallback, arguments);
         }
 
         private void infoToolStripMenuItem_Click(object sender, EventArgs e)

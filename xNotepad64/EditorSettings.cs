@@ -13,6 +13,7 @@ namespace xNotepad64
         public const float DefaultTextFontSize = 10F;
         public const float MinimumTextFontSize = 6F;
         public const float MaximumTextFontSize = 48F;
+        public const string DefaultLanguageFileName = "local_ger.local";
 
         public long MaximumChunkSizeBytes { get; set; } = DefaultChunkSizeBytes;
 
@@ -23,6 +24,8 @@ namespace xNotepad64
         public float TextFontSize { get; set; } = DefaultTextFontSize;
 
         public FontStyle TextFontStyle { get; set; } = FontStyle.Regular;
+
+        public string LanguageFileName { get; set; } = DefaultLanguageFileName;
 
         public WindowPlacementSettings? MainWindowPlacement { get; set; }
 
@@ -36,6 +39,7 @@ namespace xNotepad64
             {
                 MaximumChunkSizeBytes = MaximumChunkSizeBytes,
                 AllowAbruptChunkCutoff = AllowAbruptChunkCutoff,
+                LanguageFileName = LanguageFileName,
                 TextFontFamily = TextFontFamily,
                 TextFontSize = TextFontSize,
                 TextFontStyle = TextFontStyle,
@@ -52,6 +56,11 @@ namespace xNotepad64
             if (string.IsNullOrWhiteSpace(TextFontFamily))
             {
                 TextFontFamily = DefaultTextFontFamily;
+            }
+
+            if (string.IsNullOrWhiteSpace(LanguageFileName))
+            {
+                LanguageFileName = DefaultLanguageFileName;
             }
 
             if (float.IsNaN(TextFontSize) || float.IsInfinity(TextFontSize))

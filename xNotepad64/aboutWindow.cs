@@ -14,6 +14,13 @@ namespace xNotepad64
         public aboutWindow()
         {
             InitializeComponent();
+            ApplyLocalization();
+        }
+
+        private void ApplyLocalization()
+        {
+            Text = LocalizationManager.Get("about.form.title", "Info");
+            label1.Text = LocalizationManager.Get("about.description", "© 2026 Artur Loewen\nxNotepad64 ist ein Editor zur effizienten Bearbeitung grosser Text-Dateien, die deutlich groesser als 4 GB sein koennen.");
         }
 
         private void button1_Click(object sender, EventArgs e)

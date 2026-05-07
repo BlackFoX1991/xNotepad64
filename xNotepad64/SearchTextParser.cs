@@ -25,7 +25,7 @@ namespace xNotepad64
 
                 if (i == text.Length - 1)
                 {
-                    throw new FormatException("Der Suchbegriff endet mit einem unvollstaendigen Escape.");
+                    throw new FormatException(LocalizationManager.Get("searchtext.error.incomplete_escape", "Der Suchbegriff endet mit einem unvollstaendigen Escape."));
                 }
 
                 i++;
@@ -73,7 +73,7 @@ namespace xNotepad64
                         builder.Append(ParseVariableHexEscape(text, ref i));
                         break;
                     default:
-                        throw new FormatException($"Unbekannte Escape-Sequenz \\{escape}.");
+                        throw new FormatException(LocalizationManager.Format("searchtext.error.unknown_escape", "Unbekannte Escape-Sequenz \\{0}.", escape));
                 }
             }
 
@@ -84,13 +84,13 @@ namespace xNotepad64
         {
             if (index + hexDigits >= text.Length)
             {
-                throw new FormatException($"Escape-Sequenz \\{prefix} erwartet {hexDigits} Hex-Ziffern.");
+                throw new FormatException(LocalizationManager.Format("searchtext.error.unicode_digits", "Escape-Sequenz \\{0} erwartet {1} Hex-Ziffern.", prefix, hexDigits));
             }
 
             string hex = text.Substring(index + 1, hexDigits);
             if (!ushort.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out ushort value))
             {
-                throw new FormatException($"Escape-Sequenz \\{prefix}{hex} ist ungueltig.");
+                throw new FormatException(LocalizationManager.Format("searchtext.error.unicode_invalid", "Escape-Sequenz \\{0}{1} ist ungueltig.", prefix, hex));
             }
 
             index += hexDigits;
@@ -109,13 +109,13 @@ namespace xNotepad64
 
             if (count == 0)
             {
-                throw new FormatException("Escape-Sequenz \\x erwartet mindestens eine Hex-Ziffer.");
+                throw new FormatException(LocalizationManager.Get("searchtext.error.hex_expected", "Escape-Sequenz \\x erwartet mindestens eine Hex-Ziffer."));
             }
 
             string hex = text.Substring(start, count);
             if (!ushort.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out ushort value))
             {
-                throw new FormatException($"Escape-Sequenz \\x{hex} ist ungueltig.");
+                throw new FormatException(LocalizationManager.Format("searchtext.error.hex_invalid", "Escape-Sequenz \\x{0} ist ungueltig.", hex));
             }
 
             index += count;

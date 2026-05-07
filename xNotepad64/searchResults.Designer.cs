@@ -32,10 +32,14 @@ namespace xNotepad64
             mainLayoutPanel = new TableLayoutPanel();
             searchPanel = new FlowLayoutPanel();
             searchTextBox = new TextBox();
+            replaceLabel = new Label();
+            replaceTextBox = new TextBox();
             matchCaseCheckBox = new CheckBox();
             wholeWordCheckBox = new CheckBox();
             interpretEscapesCheckBox = new CheckBox();
             searchButton = new Button();
+            replaceButton = new Button();
+            replaceAllButton = new Button();
             summaryLabel = new Label();
             resultsListView = new ListView();
             chunkColumn = new ColumnHeader();
@@ -56,80 +60,120 @@ namespace xNotepad64
             mainLayoutPanel.Location = new Point(0, 0);
             mainLayoutPanel.Name = "mainLayoutPanel";
             mainLayoutPanel.RowCount = 3;
-            mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
+            mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 120F));
             mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
             mainLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            mainLayoutPanel.Size = new Size(840, 420);
+            mainLayoutPanel.Size = new Size(980, 460);
             mainLayoutPanel.TabIndex = 0;
             // 
             // searchPanel
             // 
             searchPanel.Controls.Add(searchTextBox);
+            searchPanel.Controls.Add(replaceLabel);
+            searchPanel.Controls.Add(replaceTextBox);
             searchPanel.Controls.Add(matchCaseCheckBox);
             searchPanel.Controls.Add(wholeWordCheckBox);
             searchPanel.Controls.Add(interpretEscapesCheckBox);
             searchPanel.Controls.Add(searchButton);
+            searchPanel.Controls.Add(replaceButton);
+            searchPanel.Controls.Add(replaceAllButton);
             searchPanel.Dock = DockStyle.Fill;
             searchPanel.Location = new Point(3, 3);
             searchPanel.Name = "searchPanel";
             searchPanel.Padding = new Padding(12, 12, 12, 8);
-            searchPanel.Size = new Size(834, 78);
+            searchPanel.Size = new Size(974, 114);
             searchPanel.TabIndex = 0;
+            searchPanel.WrapContents = true;
             // 
             // searchTextBox
             // 
             searchTextBox.Location = new Point(15, 15);
             searchTextBox.Name = "searchTextBox";
-            searchTextBox.Size = new Size(240, 27);
+            searchTextBox.Size = new Size(220, 27);
             searchTextBox.TabIndex = 0;
+            // 
+            // replaceLabel
+            // 
+            replaceLabel.AutoSize = true;
+            replaceLabel.Location = new Point(241, 18);
+            replaceLabel.Margin = new Padding(6, 6, 3, 0);
+            replaceLabel.Name = "replaceLabel";
+            replaceLabel.Size = new Size(103, 20);
+            replaceLabel.TabIndex = 1;
+            replaceLabel.Text = "Ersetzen durch";
+            // 
+            // replaceTextBox
+            // 
+            replaceTextBox.Location = new Point(350, 15);
+            replaceTextBox.Name = "replaceTextBox";
+            replaceTextBox.Size = new Size(220, 27);
+            replaceTextBox.TabIndex = 2;
             // 
             // matchCaseCheckBox
             // 
             matchCaseCheckBox.AutoSize = true;
-            matchCaseCheckBox.Location = new Point(261, 15);
+            matchCaseCheckBox.Location = new Point(576, 15);
             matchCaseCheckBox.Name = "matchCaseCheckBox";
             matchCaseCheckBox.Size = new Size(168, 24);
-            matchCaseCheckBox.TabIndex = 1;
+            matchCaseCheckBox.TabIndex = 3;
             matchCaseCheckBox.Text = "Gross/Klein beachten";
             matchCaseCheckBox.UseVisualStyleBackColor = true;
             // 
             // wholeWordCheckBox
             // 
             wholeWordCheckBox.AutoSize = true;
-            wholeWordCheckBox.Location = new Point(435, 15);
+            wholeWordCheckBox.Location = new Point(750, 15);
             wholeWordCheckBox.Name = "wholeWordCheckBox";
             wholeWordCheckBox.Size = new Size(111, 24);
-            wholeWordCheckBox.TabIndex = 2;
+            wholeWordCheckBox.TabIndex = 4;
             wholeWordCheckBox.Text = "Whole Word";
             wholeWordCheckBox.UseVisualStyleBackColor = true;
             // 
             // interpretEscapesCheckBox
             // 
             interpretEscapesCheckBox.AutoSize = true;
-            interpretEscapesCheckBox.Location = new Point(552, 15);
+            interpretEscapesCheckBox.Location = new Point(15, 48);
             interpretEscapesCheckBox.Name = "interpretEscapesCheckBox";
             interpretEscapesCheckBox.Size = new Size(130, 24);
-            interpretEscapesCheckBox.TabIndex = 3;
+            interpretEscapesCheckBox.TabIndex = 5;
             interpretEscapesCheckBox.Text = "Escapes deuten";
             interpretEscapesCheckBox.UseVisualStyleBackColor = true;
             // 
             // searchButton
             // 
-            searchButton.Location = new Point(688, 15);
+            searchButton.Location = new Point(151, 48);
             searchButton.Name = "searchButton";
             searchButton.Size = new Size(110, 29);
-            searchButton.TabIndex = 4;
+            searchButton.TabIndex = 6;
             searchButton.Text = "Suchen";
             searchButton.UseVisualStyleBackColor = true;
+            // 
+            // replaceButton
+            // 
+            replaceButton.Location = new Point(267, 48);
+            replaceButton.Name = "replaceButton";
+            replaceButton.Size = new Size(110, 29);
+            replaceButton.TabIndex = 7;
+            replaceButton.Text = "Ersetzen";
+            replaceButton.UseVisualStyleBackColor = true;
+            // 
+            // replaceAllButton
+            // 
+            replaceAllButton.Location = new Point(383, 48);
+            replaceAllButton.Name = "replaceAllButton";
+            replaceAllButton.Size = new Size(130, 29);
+            replaceAllButton.TabIndex = 8;
+            replaceAllButton.Text = "Alle ersetzen";
+            replaceAllButton.UseVisualStyleBackColor = true;
             // 
             // summaryLabel
             // 
             summaryLabel.AutoSize = true;
             summaryLabel.Dock = DockStyle.Fill;
-            summaryLabel.Location = new Point(12, 84);
+            summaryLabel.Location = new Point(12, 120);
             summaryLabel.Margin = new Padding(12, 0, 12, 0);
             summaryLabel.Name = "summaryLabel";
-            summaryLabel.Size = new Size(816, 28);
+            summaryLabel.Size = new Size(956, 28);
             summaryLabel.TabIndex = 1;
             summaryLabel.Text = "Keine Treffer geladen.";
             summaryLabel.TextAlign = ContentAlignment.MiddleLeft;
@@ -140,11 +184,11 @@ namespace xNotepad64
             resultsListView.Dock = DockStyle.Fill;
             resultsListView.FullRowSelect = true;
             resultsListView.GridLines = true;
-            resultsListView.Location = new Point(12, 124);
+            resultsListView.Location = new Point(12, 160);
             resultsListView.Margin = new Padding(12);
             resultsListView.Name = "resultsListView";
-            resultsListView.Size = new Size(816, 284);
-            resultsListView.TabIndex = 2;
+            resultsListView.Size = new Size(956, 288);
+            resultsListView.TabIndex = 9;
             resultsListView.UseCompatibleStateImageBehavior = false;
             resultsListView.View = View.Details;
             // 
@@ -161,18 +205,18 @@ namespace xNotepad64
             // previewColumn
             // 
             previewColumn.Text = "Vorschau";
-            previewColumn.Width = 540;
+            previewColumn.Width = 680;
             // 
             // searchResults
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(840, 420);
+            ClientSize = new Size(980, 460);
             Controls.Add(mainLayoutPanel);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "searchResults";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Suche";
+            Text = "Suchen und Ersetzen";
             mainLayoutPanel.ResumeLayout(false);
             mainLayoutPanel.PerformLayout();
             searchPanel.ResumeLayout(false);
@@ -185,10 +229,14 @@ namespace xNotepad64
         private TableLayoutPanel mainLayoutPanel;
         private FlowLayoutPanel searchPanel;
         private TextBox searchTextBox;
+        private Label replaceLabel;
+        private TextBox replaceTextBox;
         private CheckBox matchCaseCheckBox;
         private CheckBox wholeWordCheckBox;
         private CheckBox interpretEscapesCheckBox;
         private Button searchButton;
+        private Button replaceButton;
+        private Button replaceAllButton;
         private Label summaryLabel;
         private ListView resultsListView;
         private ColumnHeader chunkColumn;
