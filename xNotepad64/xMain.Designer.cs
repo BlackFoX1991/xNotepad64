@@ -229,7 +229,7 @@
             // 
             optionenToolStripMenuItem.Image = (Image)resources.GetObject("optionenToolStripMenuItem.Image");
             optionenToolStripMenuItem.Name = "optionenToolStripMenuItem";
-            optionenToolStripMenuItem.Size = new Size(180, 24);
+            optionenToolStripMenuItem.Size = new Size(140, 24);
             optionenToolStripMenuItem.Text = "&Optionen";
             // 
             // hilfeToolStripMenuItem
@@ -243,7 +243,7 @@
             // 
             infoToolStripMenuItem.Image = (Image)resources.GetObject("infoToolStripMenuItem.Image");
             infoToolStripMenuItem.Name = "infoToolStripMenuItem";
-            infoToolStripMenuItem.Size = new Size(180, 24);
+            infoToolStripMenuItem.Size = new Size(113, 24);
             infoToolStripMenuItem.Text = "Inf&o...";
             infoToolStripMenuItem.Click += infoToolStripMenuItem_Click;
             // 
@@ -366,12 +366,12 @@
             // 
             // ChunkCol
             // 
-            ChunkCol.Text = "Data-Chunk";
+            ChunkCol.Text = "Block";
             ChunkCol.Width = 120;
             // 
             // SizeCol
             // 
-            SizeCol.Text = "Size ( Bytes )";
+            SizeCol.Text = "Groesse ( MiB )";
             SizeCol.Width = 120;
             // 
             // xMain
